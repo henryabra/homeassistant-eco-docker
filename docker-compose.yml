@@ -1,0 +1,27 @@
+version: '3.3'
+
+services:
+  home-assistant:
+    image: henryabra/rpi2-homeassistant-mqtt-check
+    volumes:
+      - ./haconf:/config
+      - /etc/localtime:/etc/localtime:ro
+    network_mode: host
+    restart: on-failure
+    depends_on:
+      - mqtt
+  mqtt:
+    image: henryabra/rpi-mosquitto
+    volumes:
+      - ./mqtt/log:/mqtt/log
+      - ./mqtt/data:/mqtt/data
+    ports:
+      - 1883:1883
+      - 8883:8883
+      - 9001:9001
+    restart: unless-stopped
+    user: 1000:1000
+    networks:
+      - ha-network
+networks:
+  ha-network:
