@@ -2,14 +2,17 @@ version: '3.3'
 
 services:
   home-assistant:
-    image: henryabra/rpi2-homeassistant-mqtt-check
+    image: henryabra/rpi2-homeassistant-mqtt-check:0.84.6
     volumes:
       - ./haconf:/config
       - /etc/localtime:/etc/localtime:ro
     network_mode: host
-    restart: on-failure
+    restart: unless-stopped
     depends_on:
       - mqtt
+      - influxdb
+      - grafana
+      - upnp
   mqtt:
     image: henryabra/rpi-mosquitto
     volumes:
@@ -23,5 +26,31 @@ services:
     user: 1000:1000
     networks:
       - ha-network
+  influxdb:
+    image: influxdb
+    volumes:
+      - ./influxdb:/var/lib/influxdb
+    ports:
+      - 8086:8086
+    network_mode: host
+    restart: unless-stopped
+    environment:
+      - PRE_CREATE_DB=home_assistant
+  grafana:
+    image: proxx/grafana-armv7
+    volumes:
+      - ./grafana:/var/lib/grafana
+    networks:
+      - ha-network
+    ports:
+      - 3000:3000
+    user: 1000:1000
+    restart: unless-stopped
+  upnp:
+    image: henryabra/upnpc
+    network_mode: host
+    restart: unless-stopped
+    environment:
+      - PORT=8123
 networks:
   ha-network:
